@@ -50,6 +50,10 @@ upload_file = st.file_uploader('Enter the MRI Scan Image',
 st.write("Current directory:", os.getcwd())
 st.write("Files:", os.listdir())
 
+with open("mrimodel.keras", "rb") as f:
+    header = f.read(4)
+    st.write("Header bytes:", header)
+
 @st.cache_resource
 def load_model():
     return tf.keras.models.load_model('mrimodel.keras')
