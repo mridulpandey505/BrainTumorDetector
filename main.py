@@ -47,6 +47,8 @@ upload_file = st.file_uploader('Enter the MRI Scan Image',
                                 label_visibility='hidden')
 
 
+st.write("Current directory:", os.getcwd())
+st.write("Files:", os.listdir())
 
 @st.cache_resource
 def load_model():
