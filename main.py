@@ -3,7 +3,7 @@ from tensorflow import keras
 import streamlit as st
 from PIL import Image
 import numpy as np
-import os, time
+import os, time, zipfile
 import matplotlib.pyplot as plt
 from keras.preprocessing.image import load_img, img_to_array
 
