@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 import streamlit as st
+import urllib.request
 from PIL import Image
 import numpy as np
 import os, time, zipfile, boto3, tempfile
@@ -47,28 +48,27 @@ upload_file = st.file_uploader('Enter the MRI Scan Image',
                                 type = ['jpg','jpeg','png'],
                                 label_visibility='hidden')
 
-
 MODEL_URL = "https://streamlit-model-mri.s3.eu-north-1.amazonaws.com/mrimodel.keras"
-MODEL_NAME = "mrimodel.keras"
 
 @st.cache_resource
 def load_keras_model():
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        model_path = os.path.join(tmp_dir, MODEL_NAME)
-        
-
-        s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
-        try:
-            s3.download_file('streamlit-model-mri', 'mrimodel.keras', model_path)
-            model = tf.keras.models.load_model(model_path)
-            return model
-        except Exception as e:
-            st.error(f"Error loading model: {e}")
-            return None
-
+    try:
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(suffix='.keras', delete=False) as tmp:
+            tmp_path = tmp.name
+            
+        # Download the model
+        urllib.request.urlretrieve(MODEL_URL, tmp_path)
+        model = tf.keras.models.load_model(tmp_path)
+        os.remove(tmp_path)  
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
 model = load_keras_model()
+
+
 
 
 
