@@ -3,8 +3,9 @@ from tensorflow import keras
 import streamlit as st
 from PIL import Image
 import numpy as np
-import os, time, zipfile
-import matplotlib.pyplot as plt
+import os, time, zipfile, boto3, tempfile
+from botocore import UNSIGNED
+from botocore.config import Config
 from keras.preprocessing.image import load_img, img_to_array
 
 
@@ -47,28 +48,34 @@ upload_file = st.file_uploader('Enter the MRI Scan Image',
                                 label_visibility='hidden')
 
 
-st.write("Current directory:", os.getcwd())
-st.write("Files:", os.listdir())
-
-try:
-    with zipfile.ZipFile("mrimodel.keras") as zf:
-        st.write("✅ Model is a valid .keras zip file")
-except zipfile.BadZipFile:
-    st.write("❌ Not a valid .keras zip file (still pointer?)")
-
+MODEL_URL = "https://streamlit-model-mri.s3.eu-north-1.amazonaws.com/mrimodel.keras"
+MODEL_NAME = "mrimodel.keras"
 
 @st.cache_resource
-def load_model():
-    return tf.keras.models.load_model('mrimodel.keras')
-model = load_model()
+def load_keras_model():
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_path = os.path.join(tmp_dir, MODEL_NAME)
+        
+
+        s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+        try:
+            s3.download_file('streamlit-model-mri', 'mrimodel.keras', model_path)
+            model = tf.keras.models.load_model(model_path)
+            return model
+        except Exception as e:
+            st.error(f"Error loading model: {e}")
+            return None
+
+
+model = load_keras_model()
+
+
 
 
 
 classes = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
 
-meningioma = 'meningioma.jpg'
-glioma = 'glioma.jpg'
-Notumour = 'Notumour.jpg'
 
 def pre(img):
     img_arr = img_to_array(img)
